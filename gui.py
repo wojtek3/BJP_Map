@@ -59,7 +59,7 @@ def generateHeatMap(path, priorityData):
     mapObj.save("output.html")
     os.system("output.html")
 
-def generateMarkerMap(path,priorityData,minScale,maxScale):
+def generateMarkerMap(path,priorityData,minScale,maxScale,Scaletype):
     with open(str(path)) as f:
         headers = []
         data = []
@@ -71,6 +71,27 @@ def generateMarkerMap(path,priorityData,minScale,maxScale):
       
     #print(headers)
     priorityIndex = headers[0].index(priorityData)
+
+    if(Scaletype == "WHO"):
+        if(priorityData == "PM10" or priorityData == "PM10\n"):
+            minScale = 0
+            maxScale = 45
+        if(priorityData == "PM25" or priorityData == "PM25\n"):
+            minScale = 0
+            maxScale = 15
+        if(priorityData == "PM1" or priorityData == "PM1\n"):
+            minScale = 0
+            maxScale = 10
+        if(priorityData == "TEMP" or priorityData == "TEMP\n"):
+            minScale = 0
+            maxScale = 30
+        if(priorityData == "HUM" or priorityData == "HUM\n"):
+            minScale = 0
+            maxScale = 100
+    if(Scaletype == "auto"):
+        col = [column[priorityIndex] for column in data]
+        maxScale = max(col)
+        minScale = min(col)
 
     mapObj = folium.Map([data[0][0], data[0][1]], zoom_start=12, max_zoom=19, control_scale = True)
 
@@ -93,35 +114,44 @@ def generateMarkerMap(path,priorityData,minScale,maxScale):
     mapObj.save("output.html")
     os.system("output.html")
 
-
-
 window = sg.Window("Jakość powietrza AGH Solar Plane", layout)
 
 while True:
     event, values = window.read()
     if event in (sg.WIN_CLOSED, 'Exit'):
         break
-    elif event == "Submit":
+    elif (event == "Submit" and values["-FILE_PATH-"] != ""):
         txt_address = values["-FILE_PATH-"]
         print(txt_address)
         with open(txt_address) as f:
             first_line = f.readline()
         vals = first_line.split(", ")[2:]
-        enterMinMaxLayout = [[sg.Checkbox('Tylko punkty', default = False, key='points')],
-            [sg.Text('Wartość minimalna'), sg.InputText(size = (10,1))],
-            [sg.Text('Wartość maksymalna'), sg.InputText(size = (10,1))]]
-        prioritySelectLayout = [[sg.Text("Wymierz daną do narysowania heatmapy")],
+        # vals[-1] = vals[-1][0:-1]
+            
+        enterMinMaxLayout = [[sg.Checkbox('Tylko punkty', default = True, key='points')],
+            [sg.Text('Typ skali')],
+            [sg.HSeparator()],
+            [sg.Radio("WHO", "scale", key = "WHO", default = True), sg.Radio("Własna", "scale", key = "own"), sg.Radio("Auto", "scale", key = "auto")],
+            [sg.Text('Wartość minimalna'), sg.InputText(size = (10,1), key = "min")],
+            [sg.Text('Wartość maksymalna'), sg.InputText(size = (10,1), key = "max")]]
+        prioritySelectLayout = [[sg.Text("Wymierz daną do narysowania mapy")],
             [sg.Combo(vals,key='dest')],
             [sg.Button('Generate'), sg.Exit()]
         ]
-        window1Layout = [[sg.Column(prioritySelectLayout),
+        window1Layout = [[sg.Column(prioritySelectLayout), sg.VSeparator(),
                          sg.Column(enterMinMaxLayout)]]
         window1 = sg.Window("Jakość powietrza AGH Solar Plane", window1Layout)
+
         event1, values1 = window1.read()
         print(values1)
         if(values1["points"] == True):
-            generateMarkerMap(txt_address, values1["dest"], values1[0], values1[1]) 
+            if(values1["WHO"]): scaleType = "WHO"
+            if(values1["own"]): scaleType = "own"
+            if(values1["auto"]): scaleType = "auto"
+            generateMarkerMap(txt_address, values1["dest"], values1["min"], values1["max"], scaleType) 
+            window1.close()
         else:
             generateHeatMap(txt_address, values1["dest"])  
-        window1.close()
+            window1.close()
+      
 window.close()

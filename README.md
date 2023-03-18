@@ -7,6 +7,7 @@ Oprogramowanie powstało w ramach projektu "Badanie Jakości Powietrza" rozwijan
 
 # Zrzuty ekranu
 Ustawienia generowania mapy:
+
 ![alt text](https://raw.githubusercontent.com/wojtek3/BJP_Map/main/Screenshots/GUI.PNG)
 
 Wygenerowana mapa (tryb markerów):
